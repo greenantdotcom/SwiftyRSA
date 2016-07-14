@@ -8,7 +8,7 @@
 
 import Foundation
 import Security
-
+import CommonCrypto
 
 public class SwiftyRSAError: NSError {
     init(message: String) {
@@ -440,7 +440,6 @@ public class SwiftyRSA: NSObject {
     
     @available(*, deprecated = 0.31, message = "Use verifySignature() with digestMethod = .SHA1")
     public func verifySHA1SignatureData(SHA1Data: NSData, signature: NSData, publicKey: SecKeyRef) throws -> VerificationResult {
-        
         return try self.verifySignatureData(SHA1Data, signature: signature, publicKey: publicKey, padding: .PKCS1SHA1)
     }
     
@@ -457,11 +456,11 @@ public class SwiftyRSA: NSObject {
     
     public func verifySignatureData(digestData: NSData, signature: NSData, publicKey: SecKeyRef, digestMethod: DigestType = defaultDigest) throws -> VerificationResult {
         
+        
         let (_,padding) = self.digestForData(digestData, digestMethod: digestMethod)
         
         return try self.verifySignatureData(digestData, signature: signature, publicKey: publicKey, padding: padding)
     }
-    
     
     // MARK: - Private
     
@@ -657,7 +656,73 @@ public class SwiftyRSA: NSObject {
         return NSData(bytes: signatureData, length: signatureData.count)
     }
     
+    #if os(OSX)
+    func verifySignatureDataOSX(data data:NSData!, signature signatureData:NSData!, keys:[SecKey], type:DigestType) throws -> VerificationResult{
+        let typeAttribute:CFString
+        let digestLength:Int!
+        
+        switch(type){
+//            case .MD5:
+//                typeAttribute = kSecDigestMD5
+            case .SHA1:
+                typeAttribute = kSecDigestSHA1
+            case .SHA256, .SHA384, .SHA512:
+                typeAttribute = kSecDigestSHA2
+        }
+        
+        switch(type){
+            case .SHA256:
+                digestLength = 256
+            case .SHA384:
+                digestLength = 384
+            case .SHA512:
+                digestLength = 512
+            default:
+                digestLength = nil
+        }
+        
+        var attDict:[NSString:AnyObject] = [
+            kSecTransformInputAttributeName: data,
+            kSecDigestTypeAttribute: typeAttribute,
+            //            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
+            //            kSecTransformDebugAttributeName: kCFBooleanFalse,
+        ]
+        
+        if digestLength != nil {
+            attDict[kSecDigestLengthAttribute] = digestLength
+        }
+        
+        for key in keys {
+            let errorRef: UnsafeMutablePointer<Unmanaged<CFError>?> = nil
+            
+            let verifier:SecTransformRef = SecVerifyTransformCreate(key, signatureData, errorRef)!
+            
+            for (key,value) in attDict {
+                SecTransformSetAttribute(verifier, key, value, errorRef)
+            }
+            
+            // Execute the transform
+            let vResult = SecTransformExecute(verifier,errorRef)
+            
+            // Not sure how to make this error get tripped…
+            //            if errorRef != nil {
+            //                print(errorRef.memory!.takeRetainedValue())
+            //                continue
+            //            }
+            
+            let v = vResult as! NSObject
+            
+            return VerificationResult(v == true)
+        }
+        
+        throw SwiftyRSAError(message: "Couldn't verify signature")
+    }
+    
+    #endif
+    
+    #if os(iOS) || os(tvOS) || os(watchOS)
     private func verifySignatureData(SHAData: NSData, signature: NSData, publicKey: SecKeyRef, padding: SecPadding) throws -> VerificationResult {
+        
         
         var verifyDataAsArray = [UInt8](count: SHAData.length / sizeof(UInt8), repeatedValue: 0)
         SHAData.getBytes(&verifyDataAsArray, length: SHAData.length)
@@ -701,6 +766,7 @@ public class SwiftyRSA: NSObject {
         
         return (digest,padding)
     }
+    #endif
     
     deinit {
         for tagData in keyTags {
