@@ -57,6 +57,7 @@ public protocol Message {
     /// - Returns: Clear message
     /// - Throws: SwiftyRSAError
     public func decrypted(with key: PrivateKey, padding: Padding) throws -> ClearMessage {
+#if os(iOS) || os(watchOS) || os(tvOS)
         let blockSize = SecKeyGetBlockSize(key.reference)
         
         var encryptedDataAsArray = [UInt8](repeating: 0, count: data.count)
@@ -84,6 +85,9 @@ public protocol Message {
         
         let decryptedData = Data(bytes: UnsafePointer<UInt8>(decryptedDataBytes), count: decryptedDataBytes.count)
         return ClearMessage(data: decryptedData)
+#elseif os(macOS)
+    throw SwiftyRSAError(message: "decrypt not implemented")
+#endif
     }
 }
 
@@ -162,7 +166,7 @@ public protocol Message {
     /// - Returns: Encrypted message
     /// - Throws: SwiftyRSAError
     public func encrypted(with key: PublicKey, padding: Padding) throws -> EncryptedMessage {
-        
+#if os(iOS) || os(watchOS) || os(tvOS)
         let blockSize = SecKeyGetBlockSize(key.reference)
         let maxChunkSize = (padding == []) ? blockSize : blockSize - 11
         
@@ -192,6 +196,9 @@ public protocol Message {
         
         let encryptedData = Data(bytes: UnsafePointer<UInt8>(encryptedDataBytes), count: encryptedDataBytes.count)
         return EncryptedMessage(data: encryptedData)
+#elseif os(macOS)
+    throw SwiftyRSAError(message: "Encrypted not impelemented")
+#endif
     }
     
     /// Signs a clear message using a private key.
@@ -204,7 +211,7 @@ public protocol Message {
     /// - Returns: Signature of the clear message after signing it with the specified digest type.
     /// - Throws: SwiftyRSAError
     public func signed(with key: PrivateKey, digestType: Signature.DigestType) throws -> Signature {
-        
+#if os(iOS) || os(watchOS) || os(tvOS)
         let digest = self.digest(digestType: digestType)
         let blockSize = SecKeyGetBlockSize(key.reference)
         let maxChunkSize = blockSize - 11
@@ -227,6 +234,9 @@ public protocol Message {
         
         let signatureData = Data(bytes: UnsafePointer<UInt8>(signatureBytes), count: signatureBytes.count)
         return Signature(data: signatureData)
+#elseif os(macOS)
+        return Signature(data: "totalnonsense".data(using: .utf8)!)
+#endif
     }
     
     /// Verifies the signature of a clear message.
@@ -238,7 +248,7 @@ public protocol Message {
     /// - Returns: Result of the verification
     /// - Throws: SwiftyRSAError
     public func verify(with key: PublicKey, signature: Signature, digestType: Signature.DigestType) throws -> VerificationResult {
-        
+#if os(iOS) || os(watchOS) || os(tvOS)
         let digest = self.digest(digestType: digestType)
         var digestBytes = [UInt8](repeating: 0, count: digest.count)
         (digest as NSData).getBytes(&digestBytes, length: digest.count)
@@ -255,6 +265,71 @@ public protocol Message {
         } else {
             throw SwiftyRSAError(message: "Couldn't verify signature - \(status)")
         }
+#else
+    let typeAttribute:CFString
+    let digestLength:Int!
+    
+    switch(digestType){
+    case .sha1:
+        typeAttribute = kSecDigestSHA1
+    case .sha256, .sha384, .sha512:
+        typeAttribute = kSecDigestSHA2
+    default:
+        // Log me!
+        throw SwiftyRSAError(message: "Unsupported signature type \(digestType)")
+    }
+    
+    switch(digestType){
+    case .sha256:
+        digestLength = 256
+    case .sha384:
+        digestLength = 384
+    case .sha512:
+        digestLength = 512
+    default:
+        // Log me!
+        throw SwiftyRSAError(message: "Unsupported signature type \(digestType)")
+    }
+    
+    var attDict:[NSString:Any] = [
+        kSecTransformInputAttributeName: self.data,
+        kSecDigestTypeAttribute: typeAttribute,
+        kSecDigestLengthAttribute: digestLength
+        //            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
+        //            kSecTransformDebugAttributeName: kCFBooleanFalse,
+    ]
+    
+    var errorRef: Unmanaged<CFError>?
+    
+//    let errorRef: UnsafeMutablePointer<Unmanaged<CFError>?> = nil
+    
+    let verifier:SecTransform = SecVerifyTransformCreate(key.reference, self.data as CFData, &errorRef)!
+    
+//    else {
+//        return SwiftyRSAError(message: "Unable to create transform create")
+//    }
+    
+    for (key,value) in attDict {
+        SecTransformSetAttribute(
+            verifier,
+            key,
+            value as CFTypeRef,
+            &errorRef
+        )
+    }
+    
+    // Execute the transform
+    let _ = SecTransformExecute(
+        verifier,
+        &errorRef
+    )
+    
+    if errorRef != nil {
+        return VerificationResult(isSuccessful: false)
+    }
+    
+    return VerificationResult(isSuccessful: true)
+#endif
     }
     
     func digest(digestType: Signature.DigestType) -> Data {

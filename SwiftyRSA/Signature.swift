@@ -53,4 +53,8 @@ import Foundation
     public var base64String: String {
         return data.base64EncodedString()
     }
+    
+    public var hexString: String {
+        return data.map { String(format: "%02hhx", $0) }.joined()
+    }
 }

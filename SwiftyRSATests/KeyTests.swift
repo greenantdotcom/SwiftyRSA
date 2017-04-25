@@ -9,8 +9,13 @@
 import XCTest
 import SwiftyRSA
 
+extension Data {
+    func hexEncodedString() -> String {
+        return map { String(format: "%02hhx", $0) }.joined()
+    }
+}
+
 class PublicKeyTests: XCTestCase {
-    
     let bundle = Bundle(for: PublicKeyTests.self)
     
     func test_initWithReference() throws {
@@ -172,6 +177,48 @@ class PrivateKeyTests: XCTestCase {
         
         let newPrivateKey = try? PrivateKey(reference: privateKey.reference)
         XCTAssertNotNil(newPrivateKey)
+    }
+    
+    let RAW_VALUE = "hello"
+    let HASHED_VALUE = "H+UWKs9aZHM1RQFBHV9Mv+OLjsiLat+mYi/dIjHe4Ww2yixTABafDAdIBH53PnQFjGZ3ST6gNNlyZOGCrZDGp/7DwmJymOz33yseO0NpwH3nHq8Wmc1UTeWW45mZ/bEGrhYlgSzf3Z+qMbCSqn0JJJ9nKTVUOi+9mZHCSqiOOe8="
+    let ENCRYPTION_PADDING_TYPE:SecPadding = .PKCS1
+    let ENCRYPTED_VALUE = "tlv30tAPhlvFBriVB+R+u/8l1lL807e0A3o57KtoRoEYGEkoc2Q43V0gGv6X9OeIZzcfA0aRssWiuPPlbnTCy+Qy1UGvGSvscWQfvRL3tpg9rOOHYe+YQ3SkyqDJb2plCqP5UJGe58QqLMZJ7+Wly/BqKInKset9y3s4mIQi6Ls="
+    
+    func testSign() throws {
+        let key = try PrivateKey(pemNamed: "swiftyrsa-private", in: Bundle(for: TestUtils.self))
+        let msg = try ClearMessage(string: RAW_VALUE, using: .utf8)
+        let sig = try msg.signed(with: key, digestType: .sha256)
+        
+        let expected = try Signature(base64Encoded: HASHED_VALUE)
+        
+        XCTAssertEqual(
+            expected.base64String,
+            sig.base64String
+        )
+    }
+    
+    func testVerify() throws {
+        let key = try PublicKey(pemNamed: "swiftyrsa-public", in: Bundle(for: TestUtils.self))
+        let msg = try ClearMessage(string: RAW_VALUE, using: .utf8)
+        let sig = try Signature(base64Encoded: HASHED_VALUE)
+        
+        let verification = try msg.verify(with: key, signature: sig, digestType: .sha256)
+        
+        XCTAssertTrue(verification.isSuccessful)
+    }
+    
+    func testEncrypt() throws {
+        let publicKey = try PublicKey(pemNamed: "swiftyrsa-public", in: Bundle(for: TestUtils.self))
+        let privateKey = try PrivateKey(pemNamed: "swiftyrsa-private", in: Bundle(for: TestUtils.self))
+        let msg = try ClearMessage(string: RAW_VALUE, using: .utf8)
+        let result = try msg.encrypted(with: publicKey, padding: ENCRYPTION_PADDING_TYPE)
+        
+        let expected = try EncryptedMessage(base64Encoded: ENCRYPTED_VALUE)
+        
+        XCTAssertEqual(
+            RAW_VALUE.data(using: .utf8)!,
+            try result.decrypted(with: privateKey, padding: ENCRYPTION_PADDING_TYPE).data
+        )
     }
     
     func test_initWithReference_failsWithPublicKey() throws {
