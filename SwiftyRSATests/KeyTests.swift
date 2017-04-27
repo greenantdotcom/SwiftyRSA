@@ -187,14 +187,23 @@ class PrivateKeyTests: XCTestCase {
     func testSign() throws {
         let key = try PrivateKey(pemNamed: "swiftyrsa-private", in: Bundle(for: TestUtils.self))
         let msg = try ClearMessage(string: RAW_VALUE, using: .utf8)
-        let sig = try msg.signed(with: key, digestType: .sha256)
         
+// macOS isn't implemented yet, so this should throw
+#if os(macOS)
+        XCTAssertThrowsError(
+            try msg.signed(with: key, digestType: .sha256)
+        )
+        
+        return
+#elseif os(iOS) || os(watchOS) || os(tvOS)
+        let sig = try msg.signed(with: key, digestType: .sha256)
         let expected = try Signature(base64Encoded: HASHED_VALUE)
         
         XCTAssertEqual(
             expected.base64String,
             sig.base64String
         )
+#endif
     }
     
     func testVerify() throws {
@@ -211,14 +220,24 @@ class PrivateKeyTests: XCTestCase {
         let publicKey = try PublicKey(pemNamed: "swiftyrsa-public", in: Bundle(for: TestUtils.self))
         let privateKey = try PrivateKey(pemNamed: "swiftyrsa-private", in: Bundle(for: TestUtils.self))
         let msg = try ClearMessage(string: RAW_VALUE, using: .utf8)
-        let result = try msg.encrypted(with: publicKey, padding: ENCRYPTION_PADDING_TYPE)
         
-        let expected = try EncryptedMessage(base64Encoded: ENCRYPTED_VALUE)
-        
-        XCTAssertEqual(
-            RAW_VALUE.data(using: .utf8)!,
-            try result.decrypted(with: privateKey, padding: ENCRYPTION_PADDING_TYPE).data
-        )
+        // macOS isn't implemented yet, so this should throw
+        #if os(macOS)
+            XCTAssertThrowsError(
+                try msg.encrypted(with: publicKey, padding: ENCRYPTION_PADDING_TYPE)
+            )
+            
+            return
+        #elseif os(iOS) || os(watchOS) || os(tvOS)
+            let result = try msg.encrypted(with: publicKey, padding: ENCRYPTION_PADDING_TYPE)
+            
+            let expected = try EncryptedMessage(base64Encoded: ENCRYPTED_VALUE)
+            
+            XCTAssertEqual(
+                RAW_VALUE.data(using: .utf8)!,
+                try expected.decrypted(with: privateKey, padding: ENCRYPTION_PADDING_TYPE).data
+            )
+        #endif
     }
     
     func test_initWithReference_failsWithPublicKey() throws {

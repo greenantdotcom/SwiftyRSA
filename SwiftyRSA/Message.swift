@@ -86,7 +86,7 @@ public protocol Message {
         let decryptedData = Data(bytes: UnsafePointer<UInt8>(decryptedDataBytes), count: decryptedDataBytes.count)
         return ClearMessage(data: decryptedData)
 #elseif os(macOS)
-    throw SwiftyRSAError(message: "decrypt not implemented")
+        throw SwiftyRSAError(message: "Not yet implemented for macOS")
 #endif
     }
 }
@@ -197,7 +197,7 @@ public protocol Message {
         let encryptedData = Data(bytes: UnsafePointer<UInt8>(encryptedDataBytes), count: encryptedDataBytes.count)
         return EncryptedMessage(data: encryptedData)
 #elseif os(macOS)
-    throw SwiftyRSAError(message: "Encrypted not impelemented")
+        throw SwiftyRSAError(message: "Not yet implemented for macOS")
 #endif
     }
     
@@ -235,7 +235,7 @@ public protocol Message {
         let signatureData = Data(bytes: UnsafePointer<UInt8>(signatureBytes), count: signatureBytes.count)
         return Signature(data: signatureData)
 #elseif os(macOS)
-        return Signature(data: "totalnonsense".data(using: .utf8)!)
+        throw SwiftyRSAError(message: "Not yet implemented for macOS")
 #endif
     }
     
