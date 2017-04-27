@@ -301,15 +301,15 @@ public protocol Message {
         attDict[kSecDigestLengthAttribute] = len
     }
     
-    var errorRef: Unmanaged<CFError>?
+    var errorRef: Unmanaged<CFError>? = nil
     
 //    let errorRef: UnsafeMutablePointer<Unmanaged<CFError>?> = nil
     
     let verifier:SecTransform = SecVerifyTransformCreate(key.reference, self.data as CFData, &errorRef)!
     
-//    else {
-//        return SwiftyRSAError(message: "Unable to create transform create")
-//    }
+    if errorRef != nil {
+        throw SwiftyRSAError(message: "Unable to create verify transform - \(errorRef!.takeRetainedValue().localizedDescription)")
+    }
     
     for (key,value) in attDict {
         SecTransformSetAttribute(
@@ -318,6 +318,10 @@ public protocol Message {
             value as CFTypeRef,
             &errorRef
         )
+        
+        if errorRef != nil {
+            throw SwiftyRSAError(message: "Unable to set attribute \(key) to \(value) - \(errorRef!.takeRetainedValue().localizedDescription)")
+        }
     }
     
     // Execute the transform
@@ -327,6 +331,8 @@ public protocol Message {
     )
     
     if errorRef != nil {
+        print("SecTransformExecute() failed - \(errorRef!.takeRetainedValue().localizedDescription)")
+        
         return VerificationResult(isSuccessful: false)
     }
     
