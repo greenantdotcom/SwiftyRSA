@@ -272,14 +272,21 @@ public protocol Message {
     switch(digestType){
     case .sha1:
         typeAttribute = kSecDigestSHA1
-    case .sha256, .sha384, .sha512:
+    case .sha256, .sha384, .sha512, .sha224:
         typeAttribute = kSecDigestSHA2
-    default:
-        // Log me!
-        throw SwiftyRSAError(message: "Unsupported signature type \(digestType)")
     }
     
+    var attDict:[NSString:Any] = [
+        kSecTransformInputAttributeName: self.data,
+        kSecDigestTypeAttribute: typeAttribute,
+        //kSecDigestLengthAttribute: digestLength
+//            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
+//            kSecTransformDebugAttributeName: kCFBooleanFalse,
+    ]
+    
     switch(digestType){
+    case .sha224:
+        digestLength = 224
     case .sha256:
         digestLength = 256
     case .sha384:
@@ -287,17 +294,12 @@ public protocol Message {
     case .sha512:
         digestLength = 512
     default:
-        // Log me!
-        throw SwiftyRSAError(message: "Unsupported signature type \(digestType)")
+        digestLength = 0
     }
     
-    var attDict:[NSString:Any] = [
-        kSecTransformInputAttributeName: self.data,
-        kSecDigestTypeAttribute: typeAttribute,
-        kSecDigestLengthAttribute: digestLength
-        //            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
-        //            kSecTransformDebugAttributeName: kCFBooleanFalse,
-    ]
+    if let len = digestLength, len > 0 {
+        attDict[kSecDigestLengthAttribute] = len
+    }
     
     var errorRef: Unmanaged<CFError>?
     
