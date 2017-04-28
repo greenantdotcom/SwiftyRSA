@@ -20,6 +20,20 @@
                ReferencedContainer = "container:SwiftyRSA.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C076F53C1DADEB90006AF5DB"
+               BuildableName = "SwiftyRSATests.xctest"
+               BlueprintName = "SwiftyRSATests"
+               ReferencedContainer = "container:SwiftyRSA.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

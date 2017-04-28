@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Security
 
 @objc public class VerificationResult: NSObject {
     public let isSuccessful: Bool
@@ -266,77 +267,80 @@ public protocol Message {
             throw SwiftyRSAError(message: "Couldn't verify signature - \(status)")
         }
 #else
-    let typeAttribute:CFString
-    let digestLength:Int!
-    
-    switch(digestType){
-    case .sha1:
-        typeAttribute = kSecDigestSHA1
-    case .sha256, .sha384, .sha512, .sha224:
-        typeAttribute = kSecDigestSHA2
-    }
-    
-    var attDict:[NSString:Any] = [
-        kSecTransformInputAttributeName: self.data,
-        kSecDigestTypeAttribute: typeAttribute,
-        //kSecDigestLengthAttribute: digestLength
-//            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
-//            kSecTransformDebugAttributeName: kCFBooleanFalse,
-    ]
-    
-    switch(digestType){
-    case .sha224:
-        digestLength = 224
-    case .sha256:
-        digestLength = 256
-    case .sha384:
-        digestLength = 384
-    case .sha512:
-        digestLength = 512
-    default:
-        digestLength = 0
-    }
-    
-    if let len = digestLength, len > 0 {
-        attDict[kSecDigestLengthAttribute] = len
-    }
-    
-    var errorRef: Unmanaged<CFError>? = nil
-    
-//    let errorRef: UnsafeMutablePointer<Unmanaged<CFError>?> = nil
-    
-    let verifier:SecTransform = SecVerifyTransformCreate(key.reference, self.data as CFData, &errorRef)!
-    
-    if errorRef != nil {
-        throw SwiftyRSAError(message: "Unable to create verify transform - \(errorRef!.takeRetainedValue().localizedDescription)")
-    }
-    
-    for (key,value) in attDict {
-        SecTransformSetAttribute(
+        // See: http://www.howtobuildsoftware.com/index.php/how-do/Cac/ruby-cocoa-openssl-licensing-rsa-using-security-transforms-to-verify-an-rsa-signature-created-with-ruby-openssl
+        let typeAttribute:CFString
+        let digestLength:Int!
+        
+        switch(digestType){
+        case .sha1:
+            typeAttribute = kSecDigestSHA1
+        case .sha256, .sha384, .sha512, .sha224:
+            typeAttribute = kSecDigestSHA2
+        }
+        
+        var attDict:[NSString:Any] = [
+            kSecTransformInputAttributeName: self.data,
+            kSecDigestTypeAttribute: typeAttribute,
+            //kSecDigestLengthAttribute: digestLength
+    //            kSecTransformDebugAttributeName: debug ? kCFBooleanTrue : kCFBooleanFalse,
+    //            kSecTransformDebugAttributeName: kCFBooleanFalse,
+        ]
+        
+        switch(digestType){
+        case .sha224:
+            digestLength = 224
+        case .sha256:
+            digestLength = 256
+        case .sha384:
+            digestLength = 384
+        case .sha512:
+            digestLength = 512
+        default:
+            digestLength = 0
+        }
+        
+        if let len = digestLength, len > 0 {
+            attDict[kSecDigestLengthAttribute] = len
+        }
+        
+        var errorRef: Unmanaged<CFError>? = nil
+        
+    //    let errorRef: UnsafeMutablePointer<Unmanaged<CFError>?> = nil
+        
+        let verifier:SecTransform = SecVerifyTransformCreate(key.reference, self.data as CFData, &errorRef)!
+        
+        if errorRef != nil {
+            throw SwiftyRSAError(message: "Unable to create verify transform - \(errorRef!.takeRetainedValue().localizedDescription)")
+        }
+        
+        for (key,value) in attDict {
+            SecTransformSetAttribute(
+                verifier,
+                key,
+                value as CFTypeRef,
+                &errorRef
+            )
+            
+            if errorRef != nil {
+                throw SwiftyRSAError(message: "Unable to set attribute \(key) to \(value) - \(errorRef!.takeRetainedValue().localizedDescription)")
+            }
+        }
+        
+        // Execute the transform
+        let result = SecTransformExecute(
             verifier,
-            key,
-            value as CFTypeRef,
             &errorRef
         )
         
         if errorRef != nil {
-            throw SwiftyRSAError(message: "Unable to set attribute \(key) to \(value) - \(errorRef!.takeRetainedValue().localizedDescription)")
+            print("SecTransformExecute() failed - \(errorRef!.takeRetainedValue().localizedDescription)")
+            
+            return VerificationResult(isSuccessful: false)
         }
-    }
-    
-    // Execute the transform
-    let _ = SecTransformExecute(
-        verifier,
-        &errorRef
-    )
-    
-    if errorRef != nil {
-        print("SecTransformExecute() failed - \(errorRef!.takeRetainedValue().localizedDescription)")
         
-        return VerificationResult(isSuccessful: false)
-    }
-    
-    return VerificationResult(isSuccessful: true)
+        return VerificationResult(
+            isSuccessful: (result as? NSNumber) == kCFBooleanFalse
+        )
 #endif
     }
     
