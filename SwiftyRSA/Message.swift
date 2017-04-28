@@ -339,7 +339,7 @@ public protocol Message {
         }
         
         return VerificationResult(
-            isSuccessful: (result as? NSNumber) == kCFBooleanTrue
+            isSuccessful: (result as? NSNumber) == kCFBooleanFalse
         )
 #endif
     }
