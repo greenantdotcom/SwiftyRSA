@@ -502,11 +502,11 @@
 			projectRoot = "";
 			targets = (
 				93C5F1E71EAFE7B100DEB6E1 /* SwiftyRSA macOS */,
+				93C5F1EF1EAFE7B100DEB6E1 /* SwiftyRSATests macOS */,
 				A0D4C96F0225BD9340375C73B5AFD981 /* SwiftyRSA iOS */,
 				EFE02F454925076C3D6C2F0B0E45892E /* SwiftyRSA watchOS */,
 				5C30B6AA1CC916F3D0BF39F8143CC530 /* SwiftyRSA tvOS */,
 				C076F53C1DADEB90006AF5DB /* SwiftyRSATests */,
-				93C5F1EF1EAFE7B100DEB6E1 /* SwiftyRSATests macOS */,
 			);
 		};
 /* End PBXProject section */
@@ -871,7 +871,7 @@
 					"$(inherited)",
 					"$(SDKROOT)/usr/lib/system",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takescoop.SwiftyRSA;
 				PRODUCT_NAME = SwiftyRSA;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -903,7 +903,7 @@
 					"$(inherited)",
 					"$(SDKROOT)/usr/lib/system",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takescoop.SwiftyRSA;
 				PRODUCT_NAME = SwiftyRSA;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1111,6 +1111,7 @@
 				93C5F1FA1EAFE7B100DEB6E1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		93C5F1FE1EAFE7B100DEB6E1 /* Build configuration list for PBXNativeTarget "SwiftyRSATests macOS" */ = {
 			isa = XCConfigurationList;
@@ -1119,6 +1120,7 @@
 				93C5F1FC1EAFE7B100DEB6E1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		98115918AFE87852C5C034851D5FE20D /* Build configuration list for PBXNativeTarget "SwiftyRSA watchOS" */ = {
 			isa = XCConfigurationList;

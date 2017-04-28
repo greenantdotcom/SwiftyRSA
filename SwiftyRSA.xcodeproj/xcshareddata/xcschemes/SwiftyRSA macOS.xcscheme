@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "93C5F1E71EAFE7B100DEB6E1"
-               BuildableName = "SwiftyRSA macOS.framework"
+               BuildableName = "SwiftyRSA.framework"
                BlueprintName = "SwiftyRSA macOS"
                ReferencedContainer = "container:SwiftyRSA.xcodeproj">
             </BuildableReference>
@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "93C5F1EF1EAFE7B100DEB6E1"
-               BuildableName = "SwiftyRSATests macOS.xctest"
+               BuildableName = "SwiftyRSATests.xctest"
                BlueprintName = "SwiftyRSATests macOS"
                ReferencedContainer = "container:SwiftyRSA.xcodeproj">
             </BuildableReference>
@@ -43,7 +43,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "93C5F1E71EAFE7B100DEB6E1"
-            BuildableName = "SwiftyRSA macOS.framework"
+            BuildableName = "SwiftyRSA.framework"
             BlueprintName = "SwiftyRSA macOS"
             ReferencedContainer = "container:SwiftyRSA.xcodeproj">
          </BuildableReference>
@@ -65,7 +65,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "93C5F1E71EAFE7B100DEB6E1"
-            BuildableName = "SwiftyRSA macOS.framework"
+            BuildableName = "SwiftyRSA.framework"
             BlueprintName = "SwiftyRSA macOS"
             ReferencedContainer = "container:SwiftyRSA.xcodeproj">
          </BuildableReference>
@@ -83,7 +83,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "93C5F1E71EAFE7B100DEB6E1"
-            BuildableName = "SwiftyRSA macOS.framework"
+            BuildableName = "SwiftyRSA.framework"
             BlueprintName = "SwiftyRSA macOS"
             ReferencedContainer = "container:SwiftyRSA.xcodeproj">
          </BuildableReference>

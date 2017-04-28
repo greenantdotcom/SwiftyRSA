@@ -45,7 +45,7 @@ enum SwiftyRSA {
     
     static func isValidKeyReference(_ reference: SecKey, forClass requiredClass: CFString) -> Bool {
         
-        guard #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *) else {
+        guard #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *), #available(OSX 10.12, *) else {
             return true
         }
         
@@ -86,7 +86,7 @@ enum SwiftyRSA {
     static func data(forKeyReference reference: SecKey) throws -> Data {
         
         // On iOS+, we can use `SecKeyCopyExternalRepresentation` directly
-        if #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *) {
+        if #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *), #available(OSX 10.12, *) {
             
             let data = SecKeyCopyExternalRepresentation(reference, nil)
             guard let unwrappedData = data as Data? else {
@@ -134,7 +134,7 @@ enum SwiftyRSA {
         let keyClass = isPublic ? kSecAttrKeyClassPublic : kSecAttrKeyClassPrivate
         
         // On iOS 10+, we can use SecKeyCreateWithData without going through the keychain
-        if #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *) {
+        if #available(iOS 10.0, *), #available(watchOS 3.0, *), #available(tvOS 10.0, *), #available(OSX 10.12, *) {
             
             let sizeInBits = keyData.count * 8
             let keyDict: [CFString: Any] = [
